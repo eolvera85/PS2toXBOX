@@ -1,6 +1,7 @@
 #include "XBOXPad.h"
 
 USB_JoystickReport_Data_t gamepad_state;
+USB_JoystickReport_Rumble_t gamepad_rumble;
 
 static int padDetected = 0;
 void (*padDetectedCallback)(void) = NULL;
@@ -19,6 +20,7 @@ void EVENT_USB_Device_Disconnect(void) {
 
 void EVENT_USB_Device_ConfigurationChanged(void) {
 	Endpoint_ConfigureEndpoint(JOYSTICK_EPADDR_IN, EP_TYPE_INTERRUPT, 20, 1);
+  Endpoint_ConfigureEndpoint(JOYSTICK_EPADDR_OUT, EP_TYPE_INTERRUPT, 8, 1);
 }
 
 void EVENT_USB_Device_ControlRequest(void) {
@@ -30,6 +32,13 @@ void EVENT_USB_Device_ControlRequest(void) {
 				Endpoint_ClearOUT();
 			}
 		break;
+    case HID_REQ_SetReport:
+      if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE)) {
+        Endpoint_ClearSETUP();
+        Endpoint_Read_Control_Stream_LE(&gamepad_rumble, 8);
+        Endpoint_ClearIN();
+      }
+    break;
 		default:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_INTERFACE) &&  USB_ControlRequest.bRequest == 0x06) {
 				Endpoint_ClearSETUP();
@@ -48,13 +57,20 @@ void HID_Task(void) {
 	if (USB_DeviceState != DEVICE_STATE_Configured)
 		return;
 
-	Endpoint_SelectEndpoint(JOYSTICK_EPADDR_IN);
-
+  Endpoint_SelectEndpoint(JOYSTICK_EPADDR_IN);
 	if (Endpoint_IsINReady()) {
 		Endpoint_Write_Stream_LE(&gamepad_state, 20, NULL);
 
 		Endpoint_ClearIN();
 	}
+
+	Endpoint_SelectEndpoint(JOYSTICK_EPADDR_OUT);
+  if (Endpoint_IsOUTReceived()) {
+      Endpoint_Read_Stream_LE(&gamepad_rumble, 8, NULL);
+
+      Endpoint_ClearOUT();
+  }
+
 }
 
 void xbox_reset_pad_status(void) {
@@ -73,6 +89,13 @@ void xbox_reset_pad_status(void) {
 
 	for (int i = 0; i < 8; i++) 
 		gamepad_state.reserved_3[i] = 0xFF;
+
+  gamepad_rumble.rid = 0x00;
+	gamepad_rumble.rsize = 0x06;
+	gamepad_rumble.left_padding = 0x00;
+	gamepad_rumble.left_rumble = 0x00;
+	gamepad_rumble.right_padding = 0x00;
+	gamepad_rumble.right_rumble = 0x00;
 }
 
 void xbox_send_pad_state(void) {

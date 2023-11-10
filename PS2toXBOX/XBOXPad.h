@@ -29,7 +29,17 @@ typedef struct {
 	uint8_t reserved_3[8];
 } USB_JoystickReport_Data_t;
 
+typedef struct {
+  uint8_t rid; 
+  uint8_t rsize;     // 0x06
+  uint8_t left_padding;
+	uint8_t left_rumble;
+  uint8_t right_padding;
+  uint8_t right_rumble;
+} USB_JoystickReport_Rumble_t; 
+
 extern USB_JoystickReport_Data_t gamepad_state;
+extern USB_JoystickReport_Rumble_t gamepad_rumble;
 
 void xbox_reset_pad_status(void);
 void xbox_send_pad_state(void);
