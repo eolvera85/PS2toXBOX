@@ -31,7 +31,6 @@ This project is functional with the physical controls of psx/ps2, to combine it 
 | GND | PS2_GND |
 
 Libraries used:
-- [LUFA](https://github.com/Palatis/Arduino-Lufa)
 - [PsxNewLib](https://github.com/SukkoPera/PsxNewLib)
 - [DigitalIO](https://github.com/greiman/DigitalIO)
-- [XBOXPadMicro](https://github.com/bootsector/XBOXPadMicro)
+- [OGXBOX-PAD](https://github.com/eolvera85/OGXBOX-PAD)
